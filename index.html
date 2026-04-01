@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTS 教学剧本生成器 (精准拼写版)</title>
-    <!-- 引入 Compromise 核心库和音节拆分插件 -->
-    <script src="https://cdn.jsdelivr.net/npm/compromise"></script>
-    <script src="https://cdn.jsdelivr.net/npm/compromise-syllables"></script>
+    <!-- 核心修复：使用了精确到版本号和具体 .js 文件的极速直链，跳过重定向！ -->
+    <script src="https://cdn.jsdelivr.net/npm/compromise@14.12.0/builds/compromise.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/compromise-syllables@1.5.0/builds/compromise-syllables.min.js"></script>
     <style>
         :root {
             --primary-color: #4F46E5;
@@ -186,13 +186,13 @@ common buckeye butterfly</textarea>
                 }
             }, 100);
 
-            // 超时提示
+            // 超时提示 (延长到 15 秒)
             setTimeout(() => {
-                if (typeof nlp === 'undefined') {
+                if (typeof nlp === 'undefined' || typeof compromiseSyllables === 'undefined') {
                     document.getElementById('engineStatus').innerHTML = "❌ 引擎加载失败，请检查网络连接或刷新页面。";
                     document.getElementById('outputArea').placeholder = "引擎加载失败，无法生成。";
                 }
-            }, 10000);
+            }, 15000);
         };
 
         // 核心：调用 Compromise 引擎进行【拼写音节】拆分
