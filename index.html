@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTS 教学剧本生成器 (NLP 增强版)</title>
-    <!-- 核心：联网调用外部 NLP 语言学库 RiTa.js -->
-    <script src="https://unpkg.com/rita"></script>
+    <!-- 核心：使用你测试成功的最稳定、速度最快的 jsdelivr CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/rita@2.8.31/dist/rita.min.js"></script>
     <style>
         :root {
             --primary-color: #4F46E5;
@@ -140,7 +140,7 @@
             <h3>输入单词列表</h3>
             <div class="tips">
                 • 遇到词组（如 common butterfly），自动保持不拆。<br>
-                • 极少数生僻拉丁词若引擎拆错，仍可用 <b>|</b> 强制指定（如 <code>pupae|pu-pae</code>）。
+                • 极少数生僻词若引擎拆错，仍可用 <b>|</b> 强制指定（如 <code>pupae|pu-pae</code>）。
             </div>
             <textarea id="inputArea">
 permanent
@@ -160,7 +160,7 @@ common buckeye butterfly</textarea>
                 • 复制下方文本，粘贴给 TTS 即可完美朗读。<br>
                 &nbsp;
             </div>
-            <textarea id="outputArea" readonly placeholder="点击上方按钮生成..."></textarea>
+            <textarea id="outputArea" readonly placeholder="等待引擎加载..."></textarea>
             <button class="btn-copy" onclick="copyResult()">📋 复制剧本</button>
         </div>
     </div>
@@ -179,12 +179,13 @@ common buckeye butterfly</textarea>
                 }
             }, 100);
 
-            // 超时提示
+            // 超时提示 (延长到 10 秒，应对偶尔的网络波动)
             setTimeout(() => {
                 if (typeof RiTa === 'undefined') {
                     document.getElementById('engineStatus').innerHTML = "❌ NLP 引擎加载失败，请检查网络连接或刷新页面。";
+                    document.getElementById('outputArea').placeholder = "引擎加载失败，无法生成。";
                 }
-            }, 5000);
+            }, 10000);
         };
 
         // 核心：调用 RiTa.js 的发音字典进行拆分
@@ -256,7 +257,7 @@ common buckeye butterfly</textarea>
             }
             outputArea.select();
             document.execCommand('copy');
-            alert('✅ 剧本已复制到剪贴板！');
+            alert('✅ 剧本已复制到剪贴板！可以直接去 TTS 粘贴了。');
         }
     </script>
 </body>
