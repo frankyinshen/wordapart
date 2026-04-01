@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTS 教学剧本生成器 (NLP 增强版)</title>
-    <!-- 核心：使用你测试成功的最稳定、速度最快的 jsdelivr CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/rita@2.8.31/dist/rita.min.js"></script>
+    <title>TTS 教学剧本生成器 (精准拼写版)</title>
+    <!-- 引入 Compromise 核心库和音节拆分插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/compromise"></script>
+    <script src="https://cdn.jsdelivr.net/npm/compromise-syllables"></script>
     <style>
         :root {
             --primary-color: #4F46E5;
@@ -124,7 +125,7 @@
 <body>
 
     <h1>🎙️ TTS 教学剧本生成器</h1>
-    <div id="engineStatus" class="status">⏳ 正在连接云端 NLP 词典引擎...</div>
+    <div id="engineStatus" class="status">⏳ 正在连接拼写音节引擎...</div>
 
     <div class="controls">
         <div class="control-group">
@@ -140,7 +141,7 @@
             <h3>输入单词列表</h3>
             <div class="tips">
                 • 遇到词组（如 common butterfly），自动保持不拆。<br>
-                • 极少数生僻词若引擎拆错，仍可用 <b>|</b> 强制指定（如 <code>pupae|pu-pae</code>）。
+                • 如果引擎拆的不满意，可以用 <b>|</b> 强制指定（如 <code>pupae|pu-pae</code>）。
             </div>
             <textarea id="inputArea">
 permanent
@@ -166,53 +167,63 @@ common buckeye butterfly</textarea>
     </div>
 
     <script>
-        // 检查云端库是否加载成功
+        // 检查 Compromise 库和插件是否加载成功
         window.onload = function() {
             let checkInterval = setInterval(() => {
-                if (typeof RiTa !== 'undefined') {
+                // 确保核心库和音节插件都已经加载到浏览器
+                if (typeof nlp !== 'undefined' && typeof compromiseSyllables !== 'undefined') {
                     clearInterval(checkInterval);
-                    document.getElementById('engineStatus').innerHTML = "✅ 云端 NLP 发音词典已连接！";
+                    
+                    // 将音节插件注册到 NLP 引擎中
+                    nlp.plugin(compromiseSyllables);
+                    
+                    document.getElementById('engineStatus').innerHTML = "✅ 智能拼写音节引擎已连接！";
                     document.getElementById('engineStatus').classList.add('ready');
                     document.getElementById('generateBtn').disabled = false;
+                    
                     // 自动生成一次
                     generateScript();
                 }
             }, 100);
 
-            // 超时提示 (延长到 10 秒，应对偶尔的网络波动)
+            // 超时提示
             setTimeout(() => {
-                if (typeof RiTa === 'undefined') {
-                    document.getElementById('engineStatus').innerHTML = "❌ NLP 引擎加载失败，请检查网络连接或刷新页面。";
+                if (typeof nlp === 'undefined') {
+                    document.getElementById('engineStatus').innerHTML = "❌ 引擎加载失败，请检查网络连接或刷新页面。";
                     document.getElementById('outputArea').placeholder = "引擎加载失败，无法生成。";
                 }
             }, 10000);
         };
 
-        // 核心：调用 RiTa.js 的发音字典进行拆分
+        // 核心：调用 Compromise 引擎进行【拼写音节】拆分
         function getSyllablesViaNLP(word) {
-            // 包含空格的词组，不进行拆解，直接返回原词
+            // 包含空格的词组，直接返回原词
             if (word.trim().includes(' ')) {
                 return word;
             }
 
             try {
-                // RiTa 会返回用斜杠分割的音节，例如 "per/ma/nent"
-                let syllabled = RiTa.syllables(word);
-                if (syllabled) {
-                    // 把斜杠替换成连字符返回
-                    return syllabled.replace(/\//g, '-');
+                // 让引擎分析这个单词
+                let doc = nlp(word);
+                // 获取音节数组
+                let result = doc.terms().syllables();
+                
+                // 如果成功获取到音节数组，用连字符拼接起来
+                if (result && result.length > 0 && result[0].syllables) {
+                    return result[0].syllables.join('-');
                 }
             } catch (e) {
-                console.warn("NLP 引擎拆分失败，返回原词: " + word);
+                console.warn("引擎拆分失败，返回原词: " + word);
             }
             
+            // 兜底方案：如果没有拆分成功，返回原词
             return word; 
         }
 
         // 生成剧本主逻辑
         function generateScript() {
-            if (typeof RiTa === 'undefined') {
-                alert("NLP 引擎尚未加载完成，请稍候再试。");
+            if (typeof nlp === 'undefined') {
+                alert("引擎尚未加载完成，请稍候再试。");
                 return;
             }
 
